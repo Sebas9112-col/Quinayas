@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quinayas Cafe | Panel de sala</title>
+    <meta
+      name="description"
+      content="Panel de alertas para meseros con alarma continua hasta atender la mesa."
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="staff-body">
+    <main class="staff-shell">
+      <section class="staff-hero">
+        <div class="staff-hero-copy">
+          <div class="brand-lockup brand-lockup-staff" aria-label="Quinayas">
+            <img
+              class="brand-logo brand-logo-staff"
+              src="/src/assets/logo.png"
+              alt="Quinayas Aroma de Cacao"
+            />
+          </div>
+          <h1>Centro de solicitudes de mesas</h1>
+        </div>
+        <div class="staff-actions">
+          <button id="armAlarmButton" class="primary-button" type="button">
+            Activar sonido de alarma
+          </button>
+        </div>
+      </section>
+
+      <section class="staff-summary-grid">
+        <article class="summary-card summary-card-alert">
+          <span>Alertas activas</span>
+          <strong id="pendingCountValue">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Ultima actualizacion</span>
+          <strong id="lastRefreshValue">Cargando...</strong>
+        </article>
+      </section>
+
+      <section class="staff-columns">
+        <section class="staff-card">
+          <div class="section-heading">
+            <h2>Mesas pendientes</h2>
+            <p id="pendingHint" class="helper-text">
+              Cuando haya una solicitud nueva, sonará una alarma continua.
+            </p>
+          </div>
+          <div id="pendingAlerts" class="alerts-list"></div>
+        </section>
+
+        <section class="staff-card">
+          <div class="section-heading">
+            <h2>Atendidas recientemente</h2>
+          </div>
+          <div id="recentAlerts" class="alerts-list alerts-list-compact"></div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="/src/staff.js"></script>
+  </body>
+</html>

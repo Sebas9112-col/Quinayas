@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quinayas AC | Atención a la mesa</title>
+    <meta
+      name="description"
+      content="Solicitar atención desde la mesa."
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-card">
+        <div class="brand-lockup" aria-label="Quinayas Aroma de Cacao">
+          <img
+            class="brand-logo"
+            src="/src/assets/logo.png"
+            alt="Quinayas Aroma de Cacao"
+          />
+        </div>
+        <div class="hero-header">
+          <div>
+            <h1>Solicitar ayuda</h1>
+            <p class="lead">Presiona el botón cuando necesites atención.</p>
+          </div>
+          <span id="tableBadge" class="table-badge">Mesa --</span>
+        </div>
+
+        <div id="modeBanner" class="mode-banner" hidden></div>
+
+        <div class="status-panel">
+          <p id="statusMessage" class="status-message">
+            
+          </p>
+        </div>
+
+        <button id="callButton" class="primary-button" type="button">
+          Solicitar ayuda
+        </button>
+
+        <p id="helperText" class="helper-text">
+          La solicitud llegará al equipo con el número de tu mesa.
+        </p>
+      </section>
+
+      <section class="details-card">
+        <div class="detail-row">
+          <span>Mesa</span>
+          <strong id="tableIdValue">--</strong>
+        </div>
+        <div class="detail-row">
+          <span>Ultima solicitud</span>
+          <strong id="lastCallValue">Sin registros</strong>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
