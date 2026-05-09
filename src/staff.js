@@ -80,6 +80,8 @@ async function handlePendingAction(event) {
   }
 
   const alertId = actionButton.getAttribute("data-alert-id");
+  const handledBy =
+    actionButton.getAttribute("data-handled-by") || getHandledBy();
   actionButton.disabled = true;
   actionButton.textContent = "Marcando...";
 
@@ -90,7 +92,7 @@ async function handlePendingAction(event) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        handledBy: getHandledBy(),
+        handledBy,
       }),
     });
 
@@ -137,14 +139,16 @@ function renderPendingAlerts(alerts) {
     return;
   }
 
-  elements.pendingAlerts.innerHTML = alerts
+    elements.pendingAlerts.innerHTML = alerts
     .map(
       (alert) => `
         <article class="alert-card alert-card-live">
           <div class="alert-card-top">
             <div>
               <p class="status-label">Mesa ${escapeHtml(alert.tableId)}</p>
-              <p class="status-message">Solicitud activa</p>
+              <p class="status-message">${getRequestTypeLabel(
+                alert.requestType
+              )}</p>
             </div>
             <span class="table-badge table-badge-alert">
               ${formatElapsed(alert.requestedAt)}
@@ -153,14 +157,23 @@ function renderPendingAlerts(alerts) {
           <p class="alert-meta">
             Recibida a las ${formatClock(alert.requestedAt)}.
           </p>
-          <button
-            class="primary-button alert-action"
-            type="button"
-            data-action="acknowledge"
-            data-alert-id="${escapeHtml(alert.id)}"
-          >
-            Marcar atendida
-          </button>
+          <div class="waiter-grid">
+            ${["Grace", "Victor", "Luis", "Patinador"]
+              .map(
+                (waiterName) => `
+                  <button
+                    class="primary-button waiter-button"
+                    type="button"
+                    data-action="acknowledge"
+                    data-alert-id="${escapeHtml(alert.id)}"
+                    data-handled-by="${escapeHtml(waiterName)}"
+                  >
+                    ${escapeHtml(waiterName)}
+                  </button>
+                `
+              )
+              .join("")}
+          </div>
         </article>
       `
     )
@@ -282,6 +295,10 @@ function scheduleTone(audioContext, startTime, frequency, duration) {
 
 function getHandledBy() {
   return "Equipo de sala";
+}
+
+function getRequestTypeLabel(requestType) {
+  return requestType === "bill" ? "Solicitud de cuenta" : "Solicitud activa";
 }
 
 function formatClock(value) {

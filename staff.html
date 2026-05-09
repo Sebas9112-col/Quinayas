@@ -8,7 +8,16 @@
       name="description"
       content="Panel de alertas para meseros con alarma continua hasta atender la mesa."
     />
-    <link rel="stylesheet" href="/src/styles.css" />
+    <script>
+      (function () {
+        const assetBase =
+          window.location.protocol === "file:" ? "./src/" : "/src/";
+        const stylesheet = document.createElement("link");
+        stylesheet.rel = "stylesheet";
+        stylesheet.href = assetBase + "styles.css";
+        document.head.appendChild(stylesheet);
+      })();
+    </script>
   </head>
   <body class="staff-body">
     <main class="staff-shell">
@@ -17,7 +26,8 @@
           <div class="brand-lockup brand-lockup-staff" aria-label="Quinayas">
             <img
               class="brand-logo brand-logo-staff"
-              src="/src/assets/logo.png"
+              data-asset-path="assets/logo.png"
+              src=""
               alt="Quinayas Aroma de Cacao"
             />
           </div>
@@ -61,6 +71,15 @@
       </section>
     </main>
 
-    <script type="module" src="/src/staff.js"></script>
+    <script type="module">
+      const assetBase =
+        window.location.protocol === "file:" ? "./src/" : "/src/";
+      document
+        .querySelectorAll("[data-asset-path]")
+        .forEach((element) => {
+          element.src = assetBase + element.dataset.assetPath;
+        });
+      import(assetBase + "staff.js");
+    </script>
   </body>
 </html>

@@ -8,7 +8,16 @@
       name="description"
       content="Solicitar atención desde la mesa."
     />
-    <link rel="stylesheet" href="/src/styles.css" />
+    <script>
+      (function () {
+        const assetBase =
+          window.location.protocol === "file:" ? "./src/" : "/src/";
+        const stylesheet = document.createElement("link");
+        stylesheet.rel = "stylesheet";
+        stylesheet.href = assetBase + "styles.css";
+        document.head.appendChild(stylesheet);
+      })();
+    </script>
   </head>
   <body>
     <main class="app-shell">
@@ -16,47 +25,72 @@
         <div class="brand-lockup" aria-label="Quinayas Aroma de Cacao">
           <img
             class="brand-logo"
-            src="/src/assets/logo.png"
+            data-asset-path="assets/logo.png"
+            src=""
             alt="Quinayas Aroma de Cacao"
           />
         </div>
         <div class="hero-header">
           <div>
-            <h1>Solicitar ayuda</h1>
-            <p class="lead">Presiona el botón cuando necesites atención.</p>
+            <h2>Selecciona una opcion:</h2>
           </div>
           <span id="tableBadge" class="table-badge">Mesa --</span>
         </div>
 
         <div id="modeBanner" class="mode-banner" hidden></div>
 
-        <div class="status-panel">
+        <div class="status-panel" hidden>
           <p id="statusMessage" class="status-message">
             
           </p>
         </div>
 
-        <button id="callButton" class="primary-button" type="button">
-          Solicitar ayuda
-        </button>
+        <div class="action-stack">
+          <button
+            id="waiterButton"
+            class="primary-button"
+            type="button"
+            data-request-type="waiter"
+          >
+            Llamar al mesero
+          </button>
+
+          <button
+            id="billButton"
+            class="primary-button"
+            type="button"
+            data-request-type="bill"
+          >
+            Solicitar cuenta
+          </button>
+        </div>
 
         <p id="helperText" class="helper-text">
           La solicitud llegará al equipo con el número de tu mesa.
         </p>
       </section>
 
-      <section class="details-card">
+      <section class="details-card details-card-links">
+        <div class="link-grid">
+          <a href="#" class="info-link">Menú</a>
+          <a href="#" class="info-link">Instagram</a>
+        </div>
         <div class="detail-row">
           <span>Mesa</span>
           <strong id="tableIdValue">--</strong>
         </div>
-        <div class="detail-row">
-          <span>Ultima solicitud</span>
-          <strong id="lastCallValue">Sin registros</strong>
-        </div>
       </section>
     </main>
 
-    <script type="module" src="/src/main.js"></script>
+    <script type="module">
+      const assetBase =
+        window.location.protocol === "file:" ? "./src/" : "/src/";
+      document
+        .querySelectorAll("[data-asset-path]")
+        .forEach((element) => {
+          element.src = assetBase + element.dataset.assetPath;
+        });
+      import(assetBase + "main.js");
+    </script>
   </body>
 </html>

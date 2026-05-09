@@ -61,6 +61,27 @@ app.get("/api/staff/alerts", (_request, response) => {
   });
 });
 
+app.get("/api/tables/:tableId/status", (request, response) => {
+  const tableId = sanitizeTableId(request.params.tableId);
+
+  if (!tableId) {
+    response.status(400).json({
+      ok: false,
+      message: "Mesa invalida.",
+    });
+    return;
+  }
+
+  const pendingAlert = pendingAlerts.find((alert) => alert.tableId === tableId);
+  const latestAssignment = resolvedAlerts.find((alert) => alert.tableId === tableId);
+
+  response.json({
+    ok: true,
+    latestAssignment: latestAssignment || null,
+    pendingAlert: pendingAlert || null,
+  });
+});
+
 app.post("/api/staff/alerts/:alertId/acknowledge", (request, response) => {
   const alertIndex = pendingAlerts.findIndex(
     (alert) => alert.id === request.params.alertId
@@ -95,6 +116,7 @@ app.post("/api/staff/alerts/:alertId/acknowledge", (request, response) => {
 
 app.post("/api/calls", async (request, response) => {
   const requestedAt = request.body?.requestedAt || new Date().toISOString();
+  const requestType = sanitizeRequestType(request.body?.requestType);
   const tableId = sanitizeTableId(request.body?.tableId);
 
   if (!tableId) {
@@ -120,6 +142,7 @@ app.post("/api/calls", async (request, response) => {
   const alert = createPendingAlert({
     callId,
     requestedAt,
+    requestType,
     tableId,
   });
 
@@ -143,6 +166,7 @@ app.post("/api/calls", async (request, response) => {
       whatsappFallback: whatsappResult.sent,
     },
     message: buildSuccessMessage({
+      requestType,
       tableId,
       whatsappSent: whatsappResult.sent,
     }),
@@ -214,23 +238,27 @@ app.listen(PORT, () => {
   );
 });
 
-function createPendingAlert({ callId, requestedAt, tableId }) {
+function createPendingAlert({ callId, requestedAt, requestType, tableId }) {
   return {
     id: `alert-${Date.now()}-${tableId}`,
     callId,
     createdAt: new Date().toISOString(),
     requestedAt,
+    requestType,
     status: "pending",
     tableId,
   };
 }
 
-function buildSuccessMessage({ tableId, whatsappSent }) {
+function buildSuccessMessage({ requestType, tableId, whatsappSent }) {
+  const requestLabel =
+    requestType === "bill" ? "Solicitud de cuenta" : "Solicitud de ayuda";
+
   if (whatsappSent) {
-    return `Mesa ${tableId} registrada en el panel interno y reenviada por WhatsApp.`;
+    return `${requestLabel} de la mesa ${tableId} registrada y reenviada por WhatsApp.`;
   }
 
-  return `Mesa ${tableId} registrada en el panel interno.`;
+  return `${requestLabel} de la mesa ${tableId} registrada en el panel interno.`;
 }
 
 async function sendWhatsAppFallback({ requestedAt, tableId }) {
@@ -274,6 +302,10 @@ function sanitizeHandledBy(value) {
     .replace(/\s+/g, " ");
 
   return normalized || "Equipo de sala";
+}
+
+function sanitizeRequestType(value) {
+  return value === "bill" ? "bill" : "waiter";
 }
 
 function isCoolingDown(requestedAt) {

@@ -188,6 +188,17 @@ body {
   box-shadow: 0 16px 32px rgba(83, 124, 25, 0.26);
 }
 
+.primary-button-secondary {
+  background: linear-gradient(
+    180deg,
+    rgba(244, 238, 231, 0.2) 0%,
+    rgba(244, 238, 231, 0.1) 100%
+  );
+  color: var(--text);
+  border: 1px solid rgba(158, 212, 71, 0.24);
+  box-shadow: none;
+}
+
 .primary-button:hover {
   transform: translateY(-1px);
 }
@@ -207,6 +218,40 @@ body {
   margin: 16px 0 0;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.action-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.info-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border-radius: 16px;
+  background: rgba(158, 212, 71, 0.08);
+  border: 1px solid rgba(158, 212, 71, 0.14);
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.info-link:hover {
+  background: rgba(158, 212, 71, 0.12);
+}
+
+.details-card-links {
+  display: grid;
+  gap: 2px;
 }
 
 .detail-row {
@@ -362,6 +407,20 @@ body {
   margin-top: 16px;
   background: linear-gradient(180deg, #ff7654 0%, #dc5133 100%);
   box-shadow: 0 16px 32px rgba(193, 65, 39, 0.32);
+}
+
+.waiter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.waiter-button {
+  min-height: 52px;
+  margin-top: 0;
+  font-size: 0.92rem;
+  box-shadow: 0 10px 22px rgba(83, 124, 25, 0.18);
 }
 
 @keyframes alertPulse {
