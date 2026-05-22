@@ -10,7 +10,6 @@ const elements = {
   modeBanner: document.querySelector("#modeBanner"),
   statusMessage: document.querySelector("#statusMessage"),
   tableBadge: document.querySelector("#tableBadge"),
-  tableIdValue: document.querySelector("#tableIdValue"),
   waiterButton: document.querySelector("#waiterButton"),
 };
 
@@ -21,6 +20,7 @@ const appState = {
     internalDesk: true,
     whatsappFallback: false,
   },
+  cooldownIntervalId: null,
   latestAssignmentKey: null,
 };
 
@@ -33,7 +33,18 @@ window.setInterval(syncTableStatus, TABLE_STATUS_POLL_MS);
 async function hydrate() {
   updateTable(tableContext.tableId);
   await loadServerStatus();
-  await syncTableStatus();
+  const tableStatus = await syncTableStatus();
+
+  if (
+    tableStatus?.pendingAlert &&
+    isCoolingDown(tableStatus.pendingAlert.requestedAt)
+  ) {
+    startCooldown(
+      tableStatus.pendingAlert.requestedAt,
+      tableStatus.pendingAlert.requestType || "waiter"
+    );
+    return;
+  }
 
   setReadyState();
 }
@@ -57,7 +68,6 @@ function sanitizeTableId(value) {
 
 function updateTable(tableId) {
   elements.tableBadge.textContent = `Mesa ${tableId}`;
-  elements.tableIdValue.textContent = tableId;
 }
 
 function renderModeBanner() {
@@ -208,10 +218,12 @@ function setErrorState(requestType, message) {
 }
 
 function startCooldown(requestedAt, requestType) {
+  clearCooldownInterval();
+
   const requestedTime = new Date(requestedAt).getTime();
 
   tickCooldown();
-  const interval = window.setInterval(tickCooldown, 1000);
+  appState.cooldownIntervalId = window.setInterval(tickCooldown, 1000);
 
   function tickCooldown() {
     const secondsLeft = Math.max(
@@ -220,7 +232,7 @@ function startCooldown(requestedAt, requestType) {
     );
 
     if (secondsLeft <= 0) {
-      window.clearInterval(interval);
+      clearCooldownInterval();
       setReadyState();
       return;
     }
@@ -244,21 +256,21 @@ async function syncTableStatus() {
     );
 
     if (!response.ok) {
-      return;
+      return null;
     }
 
     const data = await response.json();
     const assignment = data?.latestAssignment;
 
     if (!assignment?.handledBy) {
-      return;
+      return data;
     }
 
     const assignmentKey = `${assignment.callId}:${assignment.handledBy}`;
 
     if (assignmentKey === appState.latestAssignmentKey) {
       refreshAssignmentMessage();
-      return;
+      return data;
     }
 
     appState.latestAssignmentKey = assignmentKey;
@@ -269,8 +281,10 @@ async function syncTableStatus() {
       handledBy: assignment.handledBy,
     };
     refreshAssignmentMessage();
+    return data;
   } catch (error) {
     console.error("No se pudo sincronizar el estado de la mesa", error);
+    return null;
   }
 }
 
@@ -301,6 +315,15 @@ function updateActionButtonLabel(requestType, text) {
   }
 }
 
+function clearCooldownInterval() {
+  if (!appState.cooldownIntervalId) {
+    return;
+  }
+
+  window.clearInterval(appState.cooldownIntervalId);
+  appState.cooldownIntervalId = null;
+}
+
 function refreshAssignmentMessage() {
   elements.helperText.textContent = getAssignmentAwareHelperText();
 }
@@ -318,7 +341,7 @@ function getDefaultHelperText() {
     return `${appState.assignedWaiter.handledBy} va en camino.`;
   }
 
-  return "Presiona el botón si necesitas apoyo.";
+  return "";
 }
 
 function isAssignmentMessageActive() {

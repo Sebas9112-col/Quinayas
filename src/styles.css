@@ -8,6 +8,8 @@
   --line: rgba(166, 219, 78, 0.16);
   --brand: #9ed447;
   --brand-dark: #78b22f;
+  --accent: #f0c96a;
+  --accent-dark: #d8aa3f;
   --success: #9ed447;
   --shadow: 0 24px 60px rgba(16, 8, 5, 0.34);
   --radius-xl: 28px;
@@ -188,15 +190,52 @@ body {
   box-shadow: 0 16px 32px rgba(83, 124, 25, 0.26);
 }
 
-.primary-button-secondary {
+.app-shell .primary-button {
+  min-height: 72px;
+  border-radius: 999px;
+  font-size: 1.04rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.12),
+    0 18px 28px rgba(83, 124, 25, 0.24);
+}
+
+.app-shell .primary-button::before {
+  content: "";
+  position: absolute;
+  inset: 4px 10px auto;
+  height: 34%;
+  border-radius: 999px;
   background: linear-gradient(
     180deg,
-    rgba(244, 238, 231, 0.2) 0%,
-    rgba(244, 238, 231, 0.1) 100%
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.04) 100%
   );
-  color: var(--text);
-  border: 1px solid rgba(158, 212, 71, 0.24);
-  box-shadow: none;
+  pointer-events: none;
+}
+
+.app-shell .primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.12),
+    0 22px 34px rgba(83, 124, 25, 0.28);
+}
+
+.app-shell .primary-button:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 14px rgba(83, 124, 25, 0.18);
+}
+
+.primary-button-secondary {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #3c2614;
+  box-shadow: 0 16px 32px rgba(170, 121, 21, 0.22);
 }
 
 .primary-button:hover {
@@ -245,8 +284,30 @@ body {
   text-decoration: none;
 }
 
+.info-link-icon {
+  min-height: 60px;
+  padding: 0;
+}
+
+.info-link-svg {
+  width: 24px;
+  height: 24px;
+}
+
 .info-link:hover {
   background: rgba(158, 212, 71, 0.12);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .details-card-links {
@@ -341,6 +402,34 @@ body {
   background: linear-gradient(180deg, rgba(255, 104, 87, 0.2), rgba(255, 164, 135, 0.08));
 }
 
+.request-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(158, 212, 71, 0.1);
+  border: 1px solid rgba(158, 212, 71, 0.16);
+  color: #d7efab;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  vertical-align: middle;
+}
+
+.request-chip-waiter {
+  background: #8ebf38;
+  border-color: #8ebf38;
+  color: #2c1b14;
+}
+
+.request-chip-bill {
+  background: #d3a64a;
+  border-color: #d3a64a;
+  color: #3c2614;
+}
+
 .staff-columns {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
@@ -382,6 +471,16 @@ body {
   animation: alertPulse 1.8s ease-in-out infinite;
 }
 
+.alert-card-request-waiter {
+  background: #6f8f3d;
+  border-color: #88b43a;
+}
+
+.alert-card-request-bill {
+  background: #7a5c35;
+  border-color: #c79a46;
+}
+
 .alert-card-muted {
   background: rgba(255, 248, 239, 0.05);
 }
@@ -395,6 +494,19 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+}
+
+.alert-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.alert-count-badge {
+  background: rgba(244, 238, 231, 0.18);
+  color: #fff4de;
+  border-color: rgba(244, 238, 231, 0.22);
 }
 
 .alert-meta {
@@ -417,10 +529,58 @@ body {
 }
 
 .waiter-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
   min-height: 52px;
   margin-top: 0;
   font-size: 0.92rem;
-  box-shadow: 0 10px 22px rgba(83, 124, 25, 0.18);
+  background: linear-gradient(180deg, #e9ddd1 0%, #d8c6b5 100%);
+  color: #2f2118;
+  box-shadow: 0 10px 22px rgba(35, 21, 13, 0.16);
+}
+
+.waiter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.waiter-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.waiter-tone-grace .waiter-badge {
+  background: #d97bb5;
+  color: #4a1736;
+}
+
+.waiter-tone-victor .waiter-badge {
+  background: #6db8ff;
+  color: #16314b;
+}
+
+.waiter-tone-luis .waiter-badge {
+  background: #ffb45c;
+  color: #4c2a12;
+}
+
+.waiter-tone-patinador .waiter-badge {
+  background: #f07f7f;
+  color: #4a1d1d;
+}
+
+.waiter-tone-default .waiter-badge {
+  background: #d7efab;
+  color: #2c1b14;
 }
 
 @keyframes alertPulse {

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Menu</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --page-bg: #f5f0e8;
+    --paper: #faf7f2;
+    --ink: #2c2416;
+    --spine: #3a2e1e;
+    --shadow: rgba(44, 36, 22, 0.25);
+    --tab-w: 48px;
+  }
+
+  body {
+    background: #8b7355 url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23735e44' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Lora', serif;
+    padding: 40px 20px;
+  }
+
+  .book-wrap {
+    perspective: 1800px;
+    width: 820px;
+    max-width: 100%;
+  }
+
+  .book {
+    position: relative;
+    width: 100%;
+    height: 560px;
+    transform-style: preserve-3d;
+  }
+
+  /* ── Spine ── */
+  .spine {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 100%;
+    background: linear-gradient(to right, #1e160c, #4a3820 60%, #2c2010);
+    border-radius: 4px 0 0 4px;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.5), inset 2px 0 4px rgba(255,255,255,0.05);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .spine-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    color: #c9a96e;
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  /* ── Pages container ── */
+  .pages-container {
+    position: absolute;
+    left: 28px;
+    top: 0;
+    right: var(--tab-w);
+    height: 100%;
+    overflow: hidden;
+    border-radius: 0 2px 2px 0;
+    box-shadow: 4px 0 20px var(--shadow), 8px 4px 30px rgba(0,0,0,0.2);
+  }
+
+  /* ── Individual page ── */
+  .page {
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    padding: 48px 52px 40px 44px;
+    transform-origin: left center;
+    transform: rotateY(-90deg);
+    opacity: 0;
+    transition: transform 0.55s cubic-bezier(0.645, 0.045, 0.355, 1.000),
+                opacity 0.1s ease;
+    backface-visibility: hidden;
+    overflow-y: auto;
+  }
+
+  .page.active {
+    transform: rotateY(0deg);
+    opacity: 1;
+    transition: transform 0.55s cubic-bezier(0.645, 0.045, 0.355, 1.000),
+                opacity 0s ease;
+    z-index: 5;
+  }
+
+  .page.exit {
+    transform: rotateY(90deg);
+    opacity: 0;
+    transition: transform 0.55s cubic-bezier(0.645, 0.045, 0.355, 1.000),
+                opacity 0.45s ease;
+    z-index: 4;
+  }
+
+  /* Paper texture lines */
+  .page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      rgba(180,160,120,0.12) 31px,
+      rgba(180,160,120,0.12) 32px
+    );
+    pointer-events: none;
+  }
+
+  /* Page curl shadow */
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60px; height: 100%;
+    background: linear-gradient(to left, rgba(0,0,0,0.04), transparent);
+    pointer-events: none;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1.5px solid rgba(44,36,22,0.15);
+  }
+
+  .page-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    color: #8a7456;
+    letter-spacing: 2px;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: var(--ink);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    font-size: 12px;
+    color: #8a7456;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .page-body {
+    font-size: 14.5px;
+    line-height: 1.85;
+    color: #3d3020;
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-body p { margin-bottom: 14px; }
+
+  .page-body .dropcap {
+    float: left;
+    font-family: 'Playfair Display', serif;
+    font-size: 56px;
+    line-height: 0.85;
+    margin: 4px 8px 0 0;
+    color: var(--ink);
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  .feature-card {
+    background: rgba(180,155,110,0.1);
+    border: 1px solid rgba(180,155,110,0.25);
+    border-radius: 3px;
+    padding: 14px;
+  }
+  .feature-card strong {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .feature-card span { font-size: 12.5px; color: #5a4830; line-height: 1.6; }
+
+  /* ── Thumb index tabs ── */
+  .tabs {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: var(--tab-w);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+  }
+
+  .tab {
+    flex: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    border-radius: 0 5px 5px 0;
+  }
+
+  .tab:hover { transform: translateX(-4px); filter: brightness(1.1); }
+  .tab.active { transform: translateX(-8px); filter: brightness(1.05); }
+
+  .tab::before {
+    content: '';
+    position: absolute;
+    inset: 1px 0;
+    border-radius: 0 5px 5px 0;
+    box-shadow: 3px 2px 8px rgba(0,0,0,0.3), inset -1px 0 3px rgba(255,255,255,0.15);
+  }
+
+  .tab-label {
+    writing-mode: vertical-rl;
+    font-family: 'Playfair Display', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.9);
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* Tab colors — warm editorial palette */
+  .tab:nth-child(1) { background: #8b4513; }
+  .tab:nth-child(1)::before { background: #a0522d; }
+  .tab:nth-child(2) { background: #556b2f; }
+  .tab:nth-child(2)::before { background: #6b8e23; }
+  .tab:nth-child(3) { background: #4a5568; }
+  .tab:nth-child(3)::before { background: #718096; }
+  .tab:nth-child(4) { background: #7b3f00; }
+  .tab:nth-child(4)::before { background: #9a5216; }
+  .tab:nth-child(5) { background: #2d5016; }
+  .tab:nth-child(5)::before { background: #3a6b1e; }
+
+  /* Active notch indicator */
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 60%;
+    background: rgba(255,255,255,0.6);
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* ── Bottom page edge shadow ── */
+  .book-bottom {
+    position: absolute;
+    bottom: -8px;
+    left: 28px;
+    right: var(--tab-w);
+    height: 8px;
+    background: linear-gradient(to bottom, #d4c9b0, #bfb399);
+    border-radius: 0 0 3px 3px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .book { height: 480px; }
+    .page { padding: 32px 28px 28px 28px; }
+    .page-title { font-size: 20px; }
+    .feature-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="book-wrap">
+  <div class="book">
+
+    <div class="spine">
+      <span class="spine-text">Enciclopedia</span>
+    </div>
+
+    <div class="pages-container">
+
+      <div class="page active" data-page="0">
+        <div class="page-header">
+          <span class="page-num">I</span>
+          <h1 class="page-title">Inicio</h1>
+        </div>
+        <p class="page-subtitle">Bienvenida · Introducción</p>
+        <div class="page-body">
+          <p><span class="dropcap">B</span>ienvenido a esta enciclopedia interactiva. Cada sección se despliega como las páginas de un libro antiguo, con el índice de uñeros al costado derecho para navegar entre capítulos.</p>
+          <p>Utiliza las pestañas de color en el borde para saltar directamente a cualquier sección. La animación imita el giro real de una hoja al pasar de un capítulo a otro.</p>
+          <div class="feature-grid">
+            <div class="feature-card">
+              <strong>Navegación</strong>
+              <span>Haz clic en cualquier uñero del costado derecho.</span>
+            </div>
+            <div class="feature-card">
+              <strong>Animación</strong>
+              <span>Efecto de giro de página en 3D al cambiar sección.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" data-page="1">
+        <div class="page-header">
+          <span class="page-num">II</span>
+          <h1 class="page-title">Historia</h1>
+        </div>
+        <p class="page-subtitle">Orígenes · Cronología</p>
+        <div class="page-body">
+          <p><span class="dropcap">L</span>os libros con uñeros o índices de pulgar aparecieron por primera vez en diccionarios del siglo XIX. Su propósito era permitir al lector saltar rápidamente a la sección deseada sin hojear página a página.</p>
+          <p>La técnica se popularizó en biblias, enciclopedias y directorios telefónicos, convirtiéndose en un estándar de la encuadernación de referencia.</p>
+          <p>Hoy esa misma metáfora vive en las interfaces digitales como navegación lateral con pestañas.</p>
+        </div>
+      </div>
+
+      <div class="page" data-page="2">
+        <div class="page-header">
+          <span class="page-num">III</span>
+          <h1 class="page-title">Galería</h1>
+        </div>
+        <p class="page-subtitle">Colección · Imágenes</p>
+        <div class="page-body">
+          <p><span class="dropcap">E</span>sta sección alberga la colección visual del archivo. Cada pieza ha sido catalogada y organizada por período, técnica y procedencia geográfica.</p>
+          <div class="feature-grid">
+            <div class="feature-card">
+              <strong>Período I</strong>
+              <span>Obras del siglo XVIII catalogadas por estilo y región de origen.</span>
+            </div>
+            <div class="feature-card">
+              <strong>Período II</strong>
+              <span>Colección moderna con técnicas experimentales y mixtas.</span>
+            </div>
+            <div class="feature-card">
+              <strong>Grabados</strong>
+              <span>Serie completa de grabados en cobre y aguafuerte.</span>
+            </div>
+            <div class="feature-card">
+              <strong>Manuscritos</strong>
+              <span>Documentos iluminados y caligrafía histórica.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" data-page="3">
+        <div class="page-header">
+          <span class="page-num">IV</span>
+          <h1 class="page-title">Recursos</h1>
+        </div>
+        <p class="page-subtitle">Bibliografía · Referencias</p>
+        <div class="page-body">
+          <p><span class="dropcap">A</span>quí encontrarás la bibliografía completa, enlaces a archivos externos y materiales de consulta organizados por tema y relevancia académica.</p>
+          <p>Todos los recursos han sido verificados y se actualizan periódicamente para garantizar la vigencia de las fuentes citadas en esta obra.</p>
+          <div class="feature-grid">
+            <div class="feature-card">
+              <strong>Fuentes primarias</strong>
+              <span>Documentos originales digitalizados y transcritos.</span>
+            </div>
+            <div class="feature-card">
+              <strong>Bibliografía</strong>
+              <span>Referencias académicas en formato APA e ISO.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" data-page="4">
+        <div class="page-header">
+          <span class="page-num">V</span>
+          <h1 class="page-title">Contacto</h1>
+        </div>
+        <p class="page-subtitle">Comunicación · Colaboración</p>
+        <div class="page-body">
+          <p><span class="dropcap">P</span>ara consultas, propuestas de colaboración o correcciones en el contenido, puedes comunicarte con el equipo editorial a través de los canales indicados a continuación.</p>
+          <p>Respondemos en un plazo de 48 horas hábiles. Para proyectos de investigación conjunta, adjunta una breve propuesta descriptiva.</p>
+          <div class="feature-grid">
+            <div class="feature-card">
+              <strong>Editorial</strong>
+              <span>editorial@enciclopedia.org</span>
+            </div>
+            <div class="feature-card">
+              <strong>Colaboraciones</strong>
+              <span>colabora@enciclopedia.org</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /pages-container -->
+
+    <div class="tabs">
+      <div class="tab active" data-target="0"><span class="tab-label">Inicio</span></div>
+      <div class="tab" data-target="1"><span class="tab-label">Historia</span></div>
+      <div class="tab" data-target="2"><span class="tab-label">Galería</span></div>
+      <div class="tab" data-target="3"><span class="tab-label">Recursos</span></div>
+      <div class="tab" data-target="4"><span class="tab-label">Contacto</span></div>
+    </div>
+
+    <div class="book-bottom"></div>
+
+  </div>
+</div>
+
+<script>
+  const tabs  = document.querySelectorAll('.tab');
+  const pages = document.querySelectorAll('.page');
+  let current = 0;
+  let animating = false;
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = parseInt(tab.dataset.target);
+      if (target === current || animating) return;
+      animating = true;
+
+      const oldPage = pages[current];
+      const newPage = pages[target];
+
+      // Exit current
+      oldPage.classList.remove('active');
+      oldPage.classList.add('exit');
+
+      // Enter new (tiny delay so both transitions coexist)
+      setTimeout(() => {
+        newPage.style.transform = 'rotateY(-90deg)';
+        newPage.style.opacity = '0';
+        newPage.classList.add('active');
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            newPage.style.transform = '';
+            newPage.style.opacity = '';
+          });
+        });
+      }, 60);
+
+      // Cleanup
+      setTimeout(() => {
+        oldPage.classList.remove('exit');
+        animating = false;
+      }, 620);
+
+      // Update tabs
+      tabs[current].classList.remove('active');
+      tab.classList.add('active');
+      current = target;
+    });
+  });
+</script>
+</body>
+</html>

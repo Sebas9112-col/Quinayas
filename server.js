@@ -127,7 +127,41 @@ app.post("/api/calls", async (request, response) => {
     return;
   }
 
+  const existingPendingIndex = pendingAlerts.findIndex(
+    (alert) => alert.tableId === tableId
+  );
   const lastCall = lastCallsByTable.get(tableId);
+
+  if (existingPendingIndex !== -1) {
+    const [existingAlert] = pendingAlerts.splice(existingPendingIndex, 1);
+    const updatedAlert = {
+      ...existingAlert,
+      callCount: (existingAlert.callCount || 1) + 1,
+      lastRequestedAt: requestedAt,
+      requestedAt,
+      requestType,
+    };
+
+    pendingAlerts.unshift(updatedAlert);
+    lastCallsByTable.set(tableId, {
+      requestedAt,
+      callId: updatedAlert.callId,
+    });
+
+    response.json({
+      ok: true,
+      alertId: updatedAlert.id,
+      callId: updatedAlert.callId,
+      callCount: updatedAlert.callCount,
+      channels: {
+        internalDesk: true,
+        whatsappFallback: false,
+      },
+      message: `Mesa ${tableId} actualizada. Lleva ${updatedAlert.callCount} llamados.`,
+      requestedAt,
+    });
+    return;
+  }
 
   if (lastCall && isCoolingDown(lastCall.requestedAt)) {
     response.status(429).json({
@@ -220,6 +254,14 @@ app.get("/staff", (_request, response) => {
   response.sendFile(path.join(ROOT, "staff.html"));
 });
 
+app.get("/menu", (_request, response) => {
+  response.sendFile(path.join(ROOT, "menu.html"));
+});
+
+app.get("/menu.html", (_request, response) => {
+  response.sendFile(path.join(ROOT, "menu.html"));
+});
+
 app.get("/mesa/:tableId", (_request, response) => {
   response.sendFile(path.join(ROOT, "index.html"));
 });
@@ -240,9 +282,12 @@ app.listen(PORT, () => {
 
 function createPendingAlert({ callId, requestedAt, requestType, tableId }) {
   return {
+    callCount: 1,
     id: `alert-${Date.now()}-${tableId}`,
     callId,
     createdAt: new Date().toISOString(),
+    firstRequestedAt: requestedAt,
+    lastRequestedAt: requestedAt,
     requestedAt,
     requestType,
     status: "pending",

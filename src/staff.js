@@ -142,17 +142,31 @@ function renderPendingAlerts(alerts) {
     elements.pendingAlerts.innerHTML = alerts
     .map(
       (alert) => `
-        <article class="alert-card alert-card-live">
+        <article class="alert-card alert-card-live ${getRequestTypeClass(
+          alert.requestType
+        )}">
           <div class="alert-card-top">
             <div>
-              <p class="status-label">Mesa ${escapeHtml(alert.tableId)}</p>
+              <p class="status-label">
+                Mesa ${escapeHtml(alert.tableId)}
+                <span class="request-chip ${getRequestTypeChipClass(
+                  alert.requestType
+                )}">
+                  ${escapeHtml(getRequestTypeLabel(alert.requestType))}
+                </span>
+              </p>
               <p class="status-message">${getRequestTypeLabel(
                 alert.requestType
               )}</p>
             </div>
-            <span class="table-badge table-badge-alert">
-              ${formatElapsed(alert.requestedAt)}
-            </span>
+            <div class="alert-badges">
+              <span class="table-badge alert-count-badge">
+                ${formatCallCount(alert.callCount)}
+              </span>
+              <span class="table-badge table-badge-alert">
+                ${formatElapsed(alert.requestedAt)}
+              </span>
+            </div>
           </div>
           <p class="alert-meta">
             Recibida a las ${formatClock(alert.requestedAt)}.
@@ -162,13 +176,20 @@ function renderPendingAlerts(alerts) {
               .map(
                 (waiterName) => `
                   <button
-                    class="primary-button waiter-button"
+                    class="primary-button waiter-button ${getWaiterToneClass(
+                      waiterName
+                    )}"
                     type="button"
                     data-action="acknowledge"
                     data-alert-id="${escapeHtml(alert.id)}"
                     data-handled-by="${escapeHtml(waiterName)}"
                   >
-                    ${escapeHtml(waiterName)}
+                    <span class="waiter-badge ${getWaiterToneClass(
+                      waiterName
+                    )}" aria-hidden="true">
+                      ${escapeHtml(getWaiterInitial(waiterName))}
+                    </span>
+                    <span class="waiter-label">${escapeHtml(waiterName)}</span>
                   </button>
                 `
               )
@@ -199,13 +220,23 @@ function renderRecentAlerts(alerts) {
         <article class="alert-card alert-card-muted">
           <div class="alert-card-top">
             <div>
-              <p class="status-label">Mesa ${escapeHtml(alert.tableId)}</p>
+              <p class="status-label">
+                Mesa ${escapeHtml(alert.tableId)}
+                <span class="request-chip ${getRequestTypeChipClass(
+                  alert.requestType
+                )}">${escapeHtml(
+                  getRequestTypeLabel(alert.requestType)
+                )}</span>
+              </p>
               <p class="status-message">Atendida por ${escapeHtml(
                 alert.handledBy
               )}</p>
             </div>
             <span class="table-badge">
-              ${formatWaitDuration(alert.requestedAt, alert.acknowledgedAt)}
+              ${formatWaitDuration(
+                alert.firstRequestedAt || alert.requestedAt,
+                alert.acknowledgedAt
+              )}
             </span>
           </div>
           <p class="alert-meta">
@@ -298,7 +329,34 @@ function getHandledBy() {
 }
 
 function getRequestTypeLabel(requestType) {
-  return requestType === "bill" ? "Solicitud de cuenta" : "Solicitud activa";
+  return requestType === "bill" ? "Solicitud de cuenta" : "Llamado Mesero";
+}
+
+function getRequestTypeClass(requestType) {
+  return requestType === "bill"
+    ? "alert-card-request-bill"
+    : "alert-card-request-waiter";
+}
+
+function getRequestTypeChipClass(requestType) {
+  return requestType === "bill"
+    ? "request-chip-bill"
+    : "request-chip-waiter";
+}
+
+function getWaiterInitial(waiterName) {
+  return String(waiterName).trim().charAt(0).toUpperCase();
+}
+
+function getWaiterToneClass(waiterName) {
+  const map = {
+    Grace: "waiter-tone-grace",
+    Luis: "waiter-tone-luis",
+    Patinador: "waiter-tone-patinador",
+    Victor: "waiter-tone-victor",
+  };
+
+  return map[waiterName] || "waiter-tone-default";
 }
 
 function formatClock(value) {
@@ -341,6 +399,11 @@ function formatWaitDuration(requestedAt, acknowledgedAt) {
 
   const minutes = Math.floor(diffSeconds / 60);
   return `Espero ${minutes}m`;
+}
+
+function formatCallCount(callCount) {
+  const total = Number(callCount || 1);
+  return total === 1 ? "1 llamado" : `${total} llamados`;
 }
 
 function escapeHtml(value) {
