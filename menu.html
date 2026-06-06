@@ -11,6 +11,31 @@
     <link rel="stylesheet" href="./src/menu.css" />
   </head>
   <body class="menu-body">
+    <div class="promo-popup" hidden aria-hidden="true">
+      <div class="promo-popup-backdrop" data-promo-close></div>
+      <div
+        class="promo-popup-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="promoPopupTitle"
+      >
+        <button
+          class="promo-popup-close"
+          type="button"
+          aria-label="Cerrar promoción"
+          data-promo-close
+        >
+          ×
+        </button>
+        <p id="promoPopupTitle" class="promo-popup-kicker">Promoción</p>
+        <img
+          class="promo-popup-image"
+          src="./src/assets/menu/CoffeTour.jpeg"
+          alt="Promoción Coffee Tour"
+        />
+      </div>
+    </div>
+
     <div class="menu-book-wrap">
       <div class="menu-book">
         <div class="menu-spine" aria-hidden="true">
@@ -775,7 +800,7 @@
                 <div class="product-copy">
                   <div>
                     <p class="product-tag">Bebida fria</p>
-                    <h3>Granizado de chantaduro</h3>
+                    <h3>Granizado de chontaduro</h3>
                   </div>
                   <p class="product-price">$17.000</p>
                 </div>

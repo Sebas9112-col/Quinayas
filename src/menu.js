@@ -1,15 +1,25 @@
 const tabs = Array.from(document.querySelectorAll(".menu-tab"));
 const pages = Array.from(document.querySelectorAll(".menu-page"));
+const promoPopup = document.querySelector(".promo-popup");
+const promoCloseControls = Array.from(
+  document.querySelectorAll("[data-promo-close]")
+);
 const pageScrollState = new WeakMap();
+const PAGE_CHANGE_COOLDOWN_MS = 900;
+const EDGE_REENTRY_PAUSE_MS = 320;
+const PROMO_POPUP_DURATION_MS = 5000;
 
 let currentIndex = 0;
 let isAnimating = false;
+let lastPageChangeAt = 0;
+let promoPopupTimeoutId = null;
 
 initializeMenu();
 
 function initializeMenu() {
   const initialIndex = getIndexFromHash(window.location.hash);
   setActivePage(initialIndex, false);
+  initializePromoPopup();
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -24,6 +34,9 @@ function initializeMenu() {
 
   pages.forEach((page) => {
     pageScrollState.set(page, {
+      edgeDirection: 0,
+      edgePending: false,
+      edgeLastInputAt: 0,
       lastScrollTop: 0,
       touchStartY: 0,
     });
@@ -38,6 +51,47 @@ function initializeMenu() {
     const targetIndex = getIndexFromHash(window.location.hash);
     activatePage(targetIndex, false);
   });
+}
+
+function initializePromoPopup() {
+  if (!promoPopup) {
+    return;
+  }
+
+  promoCloseControls.forEach((control) => {
+    control.addEventListener("click", closePromoPopup);
+  });
+
+  window.setTimeout(() => {
+    openPromoPopup();
+  }, 180);
+}
+
+function openPromoPopup() {
+  if (!promoPopup) {
+    return;
+  }
+
+  promoPopup.hidden = false;
+  promoPopup.setAttribute("aria-hidden", "false");
+  document.body.classList.add("promo-popup-open");
+
+  window.clearTimeout(promoPopupTimeoutId);
+  promoPopupTimeoutId = window.setTimeout(() => {
+    closePromoPopup();
+  }, PROMO_POPUP_DURATION_MS);
+}
+
+function closePromoPopup() {
+  if (!promoPopup || promoPopup.hidden) {
+    return;
+  }
+
+  promoPopup.hidden = true;
+  promoPopup.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("promo-popup-open");
+  window.clearTimeout(promoPopupTimeoutId);
+  promoPopupTimeoutId = null;
 }
 
 function getIndexFromHash(hash) {
@@ -66,6 +120,7 @@ function activatePage(targetIndex, shouldUpdateHash, options = {}) {
   const previousPage = pages[currentIndex];
   const nextPage = pages[targetIndex];
 
+  resetAllEdgeState();
   previousPage.classList.remove("active");
   previousPage.classList.remove("entering", "leaving");
   nextPage.classList.remove("entering", "leaving");
@@ -79,6 +134,7 @@ function activatePage(targetIndex, shouldUpdateHash, options = {}) {
     nextPage.classList.remove("entering");
     nextPage.classList.add("active");
     isAnimating = false;
+    lastPageChangeAt = Date.now();
   }, 580);
 
   setActiveTab(targetIndex);
@@ -96,6 +152,7 @@ function setActivePage(targetIndex, shouldUpdateHash) {
 
     const pageState = pageScrollState.get(page);
     if (pageState) {
+      resetEdgeState(pageState);
       pageState.lastScrollTop = page.scrollTop;
     }
   });
@@ -137,16 +194,10 @@ function handlePageScroll(event) {
   }
 
   const currentTop = page.scrollTop;
-  const direction = currentTop - state.lastScrollTop;
   state.lastScrollTop = currentTop;
 
-  if (direction > 0 && isAtBottom(page)) {
-    activateNeighborPage(1);
-    return;
-  }
-
-  if (direction < 0 && isAtTop(page)) {
-    activateNeighborPage(-1);
+  if (!isAtBottom(page) && !isAtTop(page)) {
+    resetEdgeState(state);
   }
 }
 
@@ -156,16 +207,24 @@ function handlePageWheel(event) {
     return;
   }
 
+  const state = pageScrollState.get(page);
+  if (!state) {
+    return;
+  }
+
   if (event.deltaY > 0 && isAtBottom(page)) {
     event.preventDefault();
-    activateNeighborPage(1);
+    handleEdgeIntent(state, 1, () => activateNeighborPage(1));
     return;
   }
 
   if (event.deltaY < 0 && isAtTop(page)) {
     event.preventDefault();
-    activateNeighborPage(-1);
+    handleEdgeIntent(state, -1, () => activateNeighborPage(-1));
+    return;
   }
+
+  resetEdgeState(state);
 }
 
 function handleTouchStart(event) {
@@ -175,6 +234,7 @@ function handleTouchStart(event) {
     return;
   }
 
+  resetEdgeState(state);
   state.touchStartY = event.touches[0].clientY;
 }
 
@@ -195,16 +255,23 @@ function handleTouchMove(event) {
 
   if (deltaY < -24 && isAtBottom(page)) {
     event.preventDefault();
-    activateNeighborPage(1);
-    state.touchStartY = currentY;
+    handleEdgeIntent(state, 1, () => {
+      activateNeighborPage(1);
+      state.touchStartY = currentY;
+    });
     return;
   }
 
   if (deltaY > 24 && isAtTop(page)) {
     event.preventDefault();
-    activateNeighborPage(-1);
-    state.touchStartY = currentY;
+    handleEdgeIntent(state, -1, () => {
+      activateNeighborPage(-1);
+      state.touchStartY = currentY;
+    });
+    return;
   }
+
+  resetEdgeState(state);
 }
 
 function activateNeighborPage(offset) {
@@ -224,4 +291,41 @@ function isAtBottom(page) {
 
 function isAtTop(page) {
   return page.scrollTop <= 6;
+}
+
+function handleEdgeIntent(state, direction, onConfirmed) {
+  const now = Date.now();
+
+  if (now - lastPageChangeAt < PAGE_CHANGE_COOLDOWN_MS) {
+    return;
+  }
+
+  if (!state.edgePending || state.edgeDirection !== direction) {
+    state.edgePending = true;
+    state.edgeDirection = direction;
+    state.edgeLastInputAt = now;
+    return;
+  }
+
+  if (now - state.edgeLastInputAt >= EDGE_REENTRY_PAUSE_MS) {
+    onConfirmed();
+    return;
+  }
+
+  state.edgeLastInputAt = now;
+}
+
+function resetEdgeState(state) {
+  state.edgePending = false;
+  state.edgeDirection = 0;
+  state.edgeLastInputAt = 0;
+}
+
+function resetAllEdgeState() {
+  pages.forEach((page) => {
+    const state = pageScrollState.get(page);
+    if (state) {
+      resetEdgeState(state);
+    }
+  });
 }

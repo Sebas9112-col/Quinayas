@@ -38,6 +38,70 @@ body.menu-body {
     #8b7355;
 }
 
+.promo-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.promo-popup[hidden] {
+  display: none;
+}
+
+.promo-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 19, 11, 0.62);
+  backdrop-filter: blur(4px);
+}
+
+.promo-popup-card {
+  position: relative;
+  z-index: 1;
+  width: min(460px, 100%);
+  padding: 18px 18px 16px;
+  border-radius: 26px;
+  background: rgba(250, 247, 242, 0.98);
+  border: 1px solid rgba(118, 93, 61, 0.18);
+  box-shadow: 0 24px 60px rgba(16, 10, 4, 0.32);
+}
+
+.promo-popup-kicker {
+  margin: 0 34px 12px 4px;
+  color: #8b6a3f;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.promo-popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(44, 36, 22, 0.08);
+  color: #4a3823;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.promo-popup-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 20px;
+  border: 1px solid rgba(118, 93, 61, 0.15);
+  box-shadow: 0 10px 24px rgba(90, 62, 32, 0.14);
+}
+
 .menu-book-wrap {
   width: min(1120px, 100%);
   perspective: 1800px;
