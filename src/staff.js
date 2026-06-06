@@ -1,34 +1,44 @@
 const POLL_INTERVAL_MS = 2000;
+const VIBRATION_PATTERN = [180, 120, 180];
 
 const elements = {
-  armAlarmButton: document.querySelector("#armAlarmButton"),
   lastRefreshValue: document.querySelector("#lastRefreshValue"),
   pendingAlerts: document.querySelector("#pendingAlerts"),
   pendingCountValue: document.querySelector("#pendingCountValue"),
-  pendingHint: document.querySelector("#pendingHint"),
   recentAlerts: document.querySelector("#recentAlerts"),
+  soundToggle: document.querySelector("#soundToggle"),
+  vibrationToggle: document.querySelector("#vibrationToggle"),
 };
 
 const dashboardState = {
   alarmIntervalId: null,
   audioContext: null,
   audioEnabled: false,
-  newestPendingId: null,
   pendingAlerts: [],
+  vibrationAvailable:
+    typeof navigator !== "undefined" &&
+    typeof navigator.vibrate === "function",
+  vibrationEnabled: false,
 };
 
 init();
 
 function init() {
-  elements.armAlarmButton?.addEventListener("click", handleArmAlarm);
+  elements.soundToggle?.addEventListener("click", handleSoundToggle);
+  elements.vibrationToggle?.addEventListener("click", handleVibrationToggle);
   elements.pendingAlerts?.addEventListener("click", handlePendingAction);
 
+  syncToggleState();
   refreshAlerts();
   window.setInterval(refreshAlerts, POLL_INTERVAL_MS);
 }
 
 async function refreshAlerts() {
   try {
+    const previousAlerts = dashboardState.pendingAlerts.map((alert) => ({
+      callCount: alert.callCount || 1,
+      id: alert.id,
+    }));
     const response = await fetch("/api/staff/alerts");
 
     if (!response.ok) {
@@ -37,14 +47,13 @@ async function refreshAlerts() {
 
     const data = await response.json();
     const pendingAlerts = Array.isArray(data.pendingAlerts)
-      ? data.pendingAlerts
+      ? [...data.pendingAlerts].sort(comparePendingAlerts)
       : [];
     const recentAlerts = Array.isArray(data.recentAlerts)
-      ? data.recentAlerts
+      ? data.recentAlerts.slice(0, 3)
       : [];
 
     dashboardState.pendingAlerts = pendingAlerts;
-    dashboardState.newestPendingId = pendingAlerts[0]?.id || null;
 
     renderPendingAlerts(pendingAlerts);
     renderRecentAlerts(recentAlerts);
@@ -52,23 +61,52 @@ async function refreshAlerts() {
       pendingCount: pendingAlerts.length,
       serverTime: data.serverTime,
     });
+
+    if (hasNewOrEscalatedAlert(previousAlerts, pendingAlerts)) {
+      triggerVibration();
+    }
+
     syncAlarmState();
   } catch (error) {
     console.error("No se pudieron cargar las alertas", error);
-    elements.pendingHint.textContent =
-      "No pudimos actualizar las alertas. Verifica la conexion con el servidor.";
+    renderPendingErrorState();
   }
 }
 
-async function handleArmAlarm() {
+async function handleSoundToggle() {
+  const nextEnabled = !dashboardState.audioEnabled;
+
+  if (!nextEnabled) {
+    dashboardState.audioEnabled = false;
+    stopAlarmLoop();
+    syncToggleState();
+    return;
+  }
+
   try {
     await ensureAudioContext();
     dashboardState.audioEnabled = true;
-    elements.armAlarmButton.textContent = "Sonido activo";
+    syncToggleState();
     syncAlarmState();
   } catch (error) {
     console.error("No se pudo activar el audio", error);
-    elements.armAlarmButton.textContent = "Reintentar sonido";
+    dashboardState.audioEnabled = false;
+    syncToggleState();
+  }
+}
+
+function handleVibrationToggle() {
+  if (!dashboardState.vibrationAvailable) {
+    dashboardState.vibrationEnabled = false;
+    syncToggleState();
+    return;
+  }
+
+  dashboardState.vibrationEnabled = !dashboardState.vibrationEnabled;
+  syncToggleState();
+
+  if (dashboardState.vibrationEnabled && dashboardState.pendingAlerts.length > 0) {
+    triggerVibration();
   }
 }
 
@@ -80,10 +118,8 @@ async function handlePendingAction(event) {
   }
 
   const alertId = actionButton.getAttribute("data-alert-id");
-  const handledBy =
-    actionButton.getAttribute("data-handled-by") || getHandledBy();
   actionButton.disabled = true;
-  actionButton.textContent = "Marcando...";
+  actionButton.textContent = "Atendiendo...";
 
   try {
     const response = await fetch(`/api/staff/alerts/${alertId}/acknowledge`, {
@@ -92,109 +128,68 @@ async function handlePendingAction(event) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        handledBy,
+        handledBy: getHandledBy(),
       }),
     });
 
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      throw new Error(data?.message || "No se pudo marcar la alerta.");
+      throw new Error(data?.message || "No se pudo atender la mesa.");
     }
 
     await refreshAlerts();
   } catch (error) {
     console.error(error);
     actionButton.disabled = false;
-    actionButton.textContent = "Marcar atendida";
-    elements.pendingHint.textContent =
-      error.message || "No se pudo marcar la alerta.";
+    actionButton.textContent = "Atender mesa";
   }
 }
 
 function renderSummary({ pendingCount, serverTime }) {
   elements.pendingCountValue.textContent = String(pendingCount);
   elements.lastRefreshValue.textContent = formatClock(serverTime);
-
-  if (pendingCount > 0) {
-    elements.pendingHint.textContent =
-      "Hay mesas esperando atencion. La alarma se apaga al atender la alerta.";
-    document.title = `(${pendingCount}) Alerta de mesas | Quinayas Cafe`;
-    return;
-  }
-
-  elements.pendingHint.textContent =
-    "Sin solicitudes pendientes. El panel seguira escuchando nuevas mesas.";
-  document.title = "Panel de sala | Quinayas Cafe";
+  document.title =
+    pendingCount > 0
+      ? `(${pendingCount}) Alerta de mesas | Quinayas Cafe`
+      : "Panel de sala | Quinayas Cafe";
 }
 
 function renderPendingAlerts(alerts) {
   if (alerts.length === 0) {
     elements.pendingAlerts.innerHTML = `
       <article class="alert-card alert-card-empty">
-        <p class="status-label">Todo al dia</p>
-        <p class="status-message">No hay mesas pendientes por atender.</p>
+        <p class="status-message">No hay solicitudes activas.</p>
       </article>
     `;
     return;
   }
 
-    elements.pendingAlerts.innerHTML = alerts
+  elements.pendingAlerts.innerHTML = alerts
     .map(
       (alert) => `
         <article class="alert-card alert-card-live ${getRequestTypeClass(
           alert.requestType
         )}">
-          <div class="alert-card-top">
-            <div>
-              <p class="status-label">
-                Mesa ${escapeHtml(alert.tableId)}
-                <span class="request-chip ${getRequestTypeChipClass(
-                  alert.requestType
-                )}">
-                  ${escapeHtml(getRequestTypeLabel(alert.requestType))}
-                </span>
-              </p>
-              <p class="status-message">${getRequestTypeLabel(
-                alert.requestType
-              )}</p>
-            </div>
-            <div class="alert-badges">
-              <span class="table-badge alert-count-badge">
-                ${formatCallCount(alert.callCount)}
-              </span>
-              <span class="table-badge table-badge-alert">
-                ${formatElapsed(alert.requestedAt)}
-              </span>
-            </div>
+          <div class="alert-card-title-row">
+            <h3 class="alert-table-name">${escapeHtml(alert.tableId)}</h3>
           </div>
-          <p class="alert-meta">
-            Recibida a las ${formatClock(alert.requestedAt)}.
-          </p>
-          <div class="waiter-grid">
-            ${["Grace", "Victor", "Luis", "Patinador"]
-              .map(
-                (waiterName) => `
-                  <button
-                    class="primary-button waiter-button ${getWaiterToneClass(
-                      waiterName
-                    )}"
-                    type="button"
-                    data-action="acknowledge"
-                    data-alert-id="${escapeHtml(alert.id)}"
-                    data-handled-by="${escapeHtml(waiterName)}"
-                  >
-                    <span class="waiter-badge ${getWaiterToneClass(
-                      waiterName
-                    )}" aria-hidden="true">
-                      ${escapeHtml(getWaiterInitial(waiterName))}
-                    </span>
-                    <span class="waiter-label">${escapeHtml(waiterName)}</span>
-                  </button>
-                `
-              )
-              .join("")}
+          <div class="alert-card-info-row">
+            <span class="table-badge alert-count-badge">
+              ${formatCallCount(alert.callCount)}
+            </span>
+            <span class="table-badge table-badge-alert">
+              ${formatElapsed(alert.firstRequestedAt || alert.requestedAt)}
+            </span>
           </div>
+          <button
+            class="primary-button alert-action"
+            type="button"
+            data-action="acknowledge"
+            data-alert-id="${escapeHtml(alert.id)}"
+          >
+            Atender mesa
+          </button>
         </article>
       `
     )
@@ -205,10 +200,7 @@ function renderRecentAlerts(alerts) {
   if (alerts.length === 0) {
     elements.recentAlerts.innerHTML = `
       <article class="alert-card alert-card-empty">
-        <p class="status-label">Sin historial reciente</p>
-        <p class="helper-text">
-          Cuando los meseros atiendan mesas, apareceran aqui.
-        </p>
+        <p class="status-message">Sin historial reciente.</p>
       </article>
     `;
     return;
@@ -220,17 +212,8 @@ function renderRecentAlerts(alerts) {
         <article class="alert-card alert-card-muted">
           <div class="alert-card-top">
             <div>
-              <p class="status-label">
-                Mesa ${escapeHtml(alert.tableId)}
-                <span class="request-chip ${getRequestTypeChipClass(
-                  alert.requestType
-                )}">${escapeHtml(
-                  getRequestTypeLabel(alert.requestType)
-                )}</span>
-              </p>
-              <p class="status-message">Atendida por ${escapeHtml(
-                alert.handledBy
-              )}</p>
+              <p class="status-label">${escapeHtml(alert.tableId)}</p>
+              <p class="status-message">Atendida</p>
             </div>
             <span class="table-badge">
               ${formatWaitDuration(
@@ -239,17 +222,23 @@ function renderRecentAlerts(alerts) {
               )}
             </span>
           </div>
-          <p class="alert-meta">
-            Atendida a las ${formatClock(alert.acknowledgedAt)}.
-          </p>
         </article>
       `
     )
     .join("");
 }
 
+function renderPendingErrorState() {
+  elements.pendingAlerts.innerHTML = `
+    <article class="alert-card alert-card-empty">
+      <p class="status-message">No pudimos actualizar el panel.</p>
+    </article>
+  `;
+}
+
 function syncAlarmState() {
   if (!dashboardState.audioEnabled) {
+    stopAlarmLoop();
     return;
   }
 
@@ -259,6 +248,33 @@ function syncAlarmState() {
   }
 
   stopAlarmLoop();
+}
+
+function syncToggleState() {
+  syncSingleToggle(elements.soundToggle, dashboardState.audioEnabled, false);
+  syncSingleToggle(
+    elements.vibrationToggle,
+    dashboardState.vibrationEnabled,
+    !dashboardState.vibrationAvailable
+  );
+}
+
+function syncSingleToggle(element, checked, disabled) {
+  if (!element) {
+    return;
+  }
+
+  element.setAttribute("aria-checked", checked ? "true" : "false");
+  element.toggleAttribute("data-on", checked);
+  element.disabled = disabled;
+}
+
+function triggerVibration() {
+  if (!dashboardState.vibrationEnabled || !dashboardState.vibrationAvailable) {
+    return;
+  }
+
+  navigator.vibrate(VIBRATION_PATTERN);
 }
 
 async function ensureAudioContext() {
@@ -328,8 +344,20 @@ function getHandledBy() {
   return "Equipo de sala";
 }
 
-function getRequestTypeLabel(requestType) {
-  return requestType === "bill" ? "Solicitud de cuenta" : "Llamado Mesero";
+function hasNewOrEscalatedAlert(previousAlerts, nextAlerts) {
+  const previousById = new Map(
+    previousAlerts.map((alert) => [alert.id, alert.callCount || 1])
+  );
+
+  return nextAlerts.some((alert) => {
+    const previousCount = previousById.get(alert.id);
+
+    if (previousCount == null) {
+      return true;
+    }
+
+    return (alert.callCount || 1) > previousCount;
+  });
 }
 
 function getRequestTypeClass(requestType) {
@@ -338,72 +366,66 @@ function getRequestTypeClass(requestType) {
     : "alert-card-request-waiter";
 }
 
-function getRequestTypeChipClass(requestType) {
-  return requestType === "bill"
-    ? "request-chip-bill"
-    : "request-chip-waiter";
-}
+function comparePendingAlerts(left, right) {
+  const leftTime = new Date(
+    left.firstRequestedAt || left.requestedAt || left.createdAt
+  ).getTime();
+  const rightTime = new Date(
+    right.firstRequestedAt || right.requestedAt || right.createdAt
+  ).getTime();
 
-function getWaiterInitial(waiterName) {
-  return String(waiterName).trim().charAt(0).toUpperCase();
-}
-
-function getWaiterToneClass(waiterName) {
-  const map = {
-    Grace: "waiter-tone-grace",
-    Luis: "waiter-tone-luis",
-    Patinador: "waiter-tone-patinador",
-    Victor: "waiter-tone-victor",
-  };
-
-  return map[waiterName] || "waiter-tone-default";
-}
-
-function formatClock(value) {
-  if (!value) {
-    return "Sin dato";
-  }
-
-  return new Intl.DateTimeFormat("es-CO", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function formatElapsed(value) {
-  const seconds = Math.max(
-    0,
-    Math.floor((Date.now() - new Date(value).getTime()) / 1000)
-  );
-
-  if (seconds < 60) {
-    return `Hace ${seconds}s`;
-  }
-
-  const minutes = Math.floor(seconds / 60);
-  return `Hace ${minutes}m`;
-}
-
-function formatWaitDuration(requestedAt, acknowledgedAt) {
-  const diffSeconds = Math.max(
-    0,
-    Math.floor(
-      (new Date(acknowledgedAt).getTime() - new Date(requestedAt).getTime()) /
-        1000
-    )
-  );
-
-  if (diffSeconds < 60) {
-    return `Espero ${diffSeconds}s`;
-  }
-
-  const minutes = Math.floor(diffSeconds / 60);
-  return `Espero ${minutes}m`;
+  return leftTime - rightTime;
 }
 
 function formatCallCount(callCount) {
-  const total = Number(callCount || 1);
-  return total === 1 ? "1 llamado" : `${total} llamados`;
+  const count = Math.max(1, Number(callCount) || 1);
+  return count === 1 ? "1 llamado" : `${count} llamados`;
+}
+
+function formatElapsed(timestamp) {
+  const diffMs = Math.max(0, Date.now() - new Date(timestamp).getTime());
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+
+  if (minutes <= 0) {
+    return `Hace ${Math.max(totalSeconds, 1)}s`;
+  }
+
+  if (minutes < 60) {
+    return `Hace ${minutes}m`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (remainingMinutes === 0) {
+    return `Hace ${hours}h`;
+  }
+
+  return `Hace ${hours}h ${remainingMinutes}m`;
+}
+
+function formatWaitDuration(startTimestamp, endTimestamp) {
+  const diffMs = Math.max(
+    0,
+    new Date(endTimestamp).getTime() - new Date(startTimestamp).getTime()
+  );
+  const totalMinutes = Math.max(1, Math.round(diffMs / 60000));
+
+  return totalMinutes === 1
+    ? "Espero 1m"
+    : `Espero ${totalMinutes}m`;
+}
+
+function formatClock(timestamp) {
+  if (!timestamp) {
+    return "--:--";
+  }
+
+  return new Intl.DateTimeFormat("es-CO", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
 }
 
 function escapeHtml(value) {

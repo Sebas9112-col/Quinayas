@@ -21,50 +21,135 @@
   </head>
   <body class="staff-body">
     <main class="staff-shell">
-      <section class="staff-hero">
-        <div class="staff-hero-copy">
-          <div class="brand-lockup brand-lockup-staff" aria-label="Quinayas">
-            <img
-              class="brand-logo brand-logo-staff"
-              data-asset-path="assets/logo.png"
-              src=""
-              alt="Quinayas Aroma de Cacao"
-            />
+      <section class="staff-topbar" aria-label="Controles del panel">
+        <div class="topbar-control-group">
+          <div class="topbar-control">
+            <span class="topbar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="topbar-svg">
+                <path
+                  d="M4 14h4l5 4V6L8 10H4z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M16 9a4.5 4.5 0 0 1 0 6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M18.5 6.5a8 8 0 0 1 0 11"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                />
+              </svg>
+            </span>
+            <button
+              id="soundToggle"
+              class="toggle-switch"
+              type="button"
+              role="switch"
+              aria-checked="false"
+              aria-label="Activar sonido"
+            >
+              <span class="toggle-switch-thumb"></span>
+            </button>
           </div>
-          <h1>Centro de solicitudes de mesas</h1>
-        </div>
-        <div class="staff-actions">
-          <button id="armAlarmButton" class="primary-button" type="button">
-            Activar sonido de alarma
-          </button>
-        </div>
-      </section>
 
-      <section class="staff-summary-grid">
-        <article class="summary-card summary-card-alert">
-          <span>Alertas activas</span>
-          <strong id="pendingCountValue">0</strong>
-        </article>
-        <article class="summary-card">
-          <span>Ultima actualizacion</span>
-          <strong id="lastRefreshValue">Cargando...</strong>
-        </article>
+          <div class="topbar-control">
+            <span class="topbar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="topbar-svg">
+                <rect
+                  x="8.4"
+                  y="3.5"
+                  width="7.2"
+                  height="13"
+                  rx="2.2"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M10.2 20h3.6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M6.5 8.4a6.2 6.2 0 0 0 0 3.2M17.5 8.4a6.2 6.2 0 0 1 0 3.2"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                />
+              </svg>
+            </span>
+            <button
+              id="vibrationToggle"
+              class="toggle-switch"
+              type="button"
+              role="switch"
+              aria-checked="false"
+              aria-label="Activar vibracion"
+            >
+              <span class="toggle-switch-thumb"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="topbar-status">
+          <div class="topbar-pill" aria-live="polite">
+            <span class="topbar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="topbar-svg">
+                <path
+                  d="M12 4a4 4 0 0 0-4 4v2.2c0 .8-.3 1.5-.8 2L5.8 14a1 1 0 0 0 .8 1.6h10.8a1 1 0 0 0 .8-1.6l-1.4-1.8a3.2 3.2 0 0 1-.8-2V8a4 4 0 0 0-4-4z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M10.2 18a2 2 0 0 0 3.6 0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                />
+              </svg>
+            </span>
+            <strong id="pendingCountValue">0</strong>
+          </div>
+
+          <div class="topbar-updated">
+            <span>Actualizado</span>
+            <strong id="lastRefreshValue">Cargando...</strong>
+          </div>
+        </div>
       </section>
 
       <section class="staff-columns">
-        <section class="staff-card">
-          <div class="section-heading">
-            <h2>Mesas pendientes</h2>
-            <p id="pendingHint" class="helper-text">
-              Cuando haya una solicitud nueva, sonará una alarma continua.
-            </p>
-          </div>
-          <div id="pendingAlerts" class="alerts-list"></div>
+        <section class="staff-card staff-card-pending">
+          <div id="pendingAlerts" class="alerts-list alerts-list-pending"></div>
         </section>
 
-        <section class="staff-card">
+        <section class="staff-card staff-card-history">
           <div class="section-heading">
-            <h2>Atendidas recientemente</h2>
+            <h2>Historial</h2>
           </div>
           <div id="recentAlerts" class="alerts-list alerts-list-compact"></div>
         </section>

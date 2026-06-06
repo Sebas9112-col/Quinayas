@@ -15,7 +15,7 @@ const elements = {
 
 const tableContext = getTableContext();
 const appState = {
-  assignedWaiter: null,
+  activeAssignment: null,
   channels: {
     internalDesk: true,
     whatsappFallback: false,
@@ -274,11 +274,10 @@ async function syncTableStatus() {
     }
 
     appState.latestAssignmentKey = assignmentKey;
-    appState.assignedWaiter = {
+    appState.activeAssignment = {
       expiresAt:
         new Date(assignment.acknowledgedAt).getTime() +
         ASSIGNMENT_MESSAGE_DURATION_MS,
-      handledBy: assignment.handledBy,
     };
     refreshAssignmentMessage();
     return data;
@@ -330,7 +329,7 @@ function refreshAssignmentMessage() {
 
 function getAssignmentAwareHelperText() {
   if (isAssignmentMessageActive()) {
-    return `${appState.assignedWaiter.handledBy} va en camino.`;
+    return "Tu solicitud fue tomada. Ya vamos en camino.";
   }
 
   return "El personal irá en camino.";
@@ -338,19 +337,19 @@ function getAssignmentAwareHelperText() {
 
 function getDefaultHelperText() {
   if (isAssignmentMessageActive()) {
-    return `${appState.assignedWaiter.handledBy} va en camino.`;
+    return "Tu solicitud fue tomada. Ya vamos en camino.";
   }
 
   return "";
 }
 
 function isAssignmentMessageActive() {
-  if (!appState.assignedWaiter?.handledBy || !appState.assignedWaiter?.expiresAt) {
+  if (!appState.activeAssignment?.expiresAt) {
     return false;
   }
 
-  if (Date.now() > appState.assignedWaiter.expiresAt) {
-    appState.assignedWaiter = null;
+  if (Date.now() > appState.activeAssignment.expiresAt) {
+    appState.activeAssignment = null;
     return false;
   }
 

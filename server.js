@@ -55,8 +55,8 @@ app.get("/api/status", (_request, response) => {
 app.get("/api/staff/alerts", (_request, response) => {
   response.json({
     ok: true,
-    pendingAlerts,
-    recentAlerts: resolvedAlerts.slice(0, 12),
+    pendingAlerts: [...pendingAlerts].sort(comparePendingAlerts),
+    recentAlerts: resolvedAlerts.slice(0, 3),
     serverTime: new Date().toISOString(),
   });
 });
@@ -133,7 +133,7 @@ app.post("/api/calls", async (request, response) => {
   const lastCall = lastCallsByTable.get(tableId);
 
   if (existingPendingIndex !== -1) {
-    const [existingAlert] = pendingAlerts.splice(existingPendingIndex, 1);
+    const existingAlert = pendingAlerts[existingPendingIndex];
     const updatedAlert = {
       ...existingAlert,
       callCount: (existingAlert.callCount || 1) + 1,
@@ -142,7 +142,7 @@ app.post("/api/calls", async (request, response) => {
       requestType,
     };
 
-    pendingAlerts.unshift(updatedAlert);
+    pendingAlerts.splice(existingPendingIndex, 1, updatedAlert);
     lastCallsByTable.set(tableId, {
       requestedAt,
       callId: updatedAlert.callId,
@@ -304,6 +304,17 @@ function buildSuccessMessage({ requestType, tableId, whatsappSent }) {
   }
 
   return `${requestLabel} de la mesa ${tableId} registrada en el panel interno.`;
+}
+
+function comparePendingAlerts(left, right) {
+  const leftTime = new Date(
+    left.firstRequestedAt || left.requestedAt || left.createdAt
+  ).getTime();
+  const rightTime = new Date(
+    right.firstRequestedAt || right.requestedAt || right.createdAt
+  ).getTime();
+
+  return leftTime - rightTime;
 }
 
 async function sendWhatsAppFallback({ requestedAt, tableId }) {
