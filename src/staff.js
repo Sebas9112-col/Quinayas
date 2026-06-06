@@ -1,5 +1,5 @@
 const POLL_INTERVAL_MS = 2000;
-const VIBRATION_PATTERN = [180, 120, 180];
+const VIBRATION_PATTERN = [120, 70, 120, 70, 120, 70, 160];
 
 const elements = {
   lastRefreshValue: document.querySelector("#lastRefreshValue"),
