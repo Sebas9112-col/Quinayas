@@ -20,7 +20,86 @@
     </script>
   </head>
   <body>
-    <main class="app-shell">
+    <section
+      id="policiesGate"
+      class="policies-gate"
+      aria-labelledby="policiesTitle"
+    >
+      <div class="policies-card">
+        <header class="policies-header">
+          <img
+            class="policies-logo"
+            data-asset-path="assets/logo.png"
+            src=""
+            alt="Quinayas Aroma de Cacao"
+          />
+          <p class="policies-kicker">Antes de continuar</p>
+          <h1 id="policiesTitle">Políticas de reserva y permanencia</h1>
+          <p class="policies-intro">
+            Agradecemos mantener un ambiente de respeto hacia nuestro personal,
+            instalaciones y otros comensales. Nuestro propósito es brindar una
+            excelente experiencia de manera integral a todos los comensales, por
+            tal motivo nos reservamos el derecho de admisión en caso de
+            incumplimiento de las siguientes políticas:
+          </p>
+        </header>
+
+        <div class="policies-action">
+          <button id="acceptPoliciesButton" class="accept-policies-button" type="button">
+            Acepto las políticas
+          </button>
+          <p>Al continuar, confirmas que leíste y aceptas estas condiciones.</p>
+        </div>
+
+        <ol class="policies-list">
+          <li>
+            Las mascotas son bienvenidas únicamente en la zona PET Friendly
+            (Jardín), máximo dos mascotas por adulto responsable o tenedor.
+            Durante su permanencia, deben estar con correa y bajo supervisión de
+            su tenedor en todo momento; así mismo, este se hace responsable por
+            cualquier daño o afectación a las instalaciones, mobiliario, menaje,
+            otros comensales o a otras mascotas. El tenedor debe supervisar que
+            su mascota no realice sus necesidades fisiológicas en nuestras
+            instalaciones. Si esto llegase a pasar, proporcionaremos lo
+            necesario para que su tenedor realice la limpieza respectiva.
+          </li>
+          <li>
+            Los niños deben estar acompañados de un adulto en la misma mesa,
+            bajo su cuidado y supervisión constante. También deben ser
+            cuidadosos con el ruido y ordenados en el manejo de los juegos
+            dispuestos para la diversión de todos. Cualquier afectación
+            ocasionada a juegos, mobiliario, otros comensales o menaje deberá
+            ser asumida por el adulto responsable.
+          </li>
+          <li>
+            Las mesas se mantendrán reservadas hasta 20 minutos después del
+            horario acordado. Pasado este tiempo, la reserva se liberará
+            automáticamente. En caso de reservas para grupos o talleres
+            creativos, podrá establecerse un consumo mínimo por persona o por
+            mesa, el cual será informado al momento de confirmar la reserva. En
+            horarios de alta demanda, las reservas podrán tener un tiempo máximo
+            de permanencia (2 horas), con el fin de garantizar una experiencia
+            cómoda para todos y facilitar el ingreso a otros comensales.
+          </li>
+          <li>
+            Somos amigables con el medio ambiente, por lo tanto, nos reservamos
+            el uso de globos, plásticos o materiales contaminantes que puedan
+            afectarlo; así como también el uso de decoración o elementos que
+            vayan en contravía con nuestra imagen.
+          </li>
+          <li>
+            Nuestros espacios no están diseñados para coworking; sin embargo,
+            quienes realicen teletrabajo en nuestras instalaciones en horarios
+            de alta demanda podrán tener un máximo de permanencia (2 horas) y
+            podrá establecerse un consumo mínimo por persona o por mesa, el cual
+            será informado al inicio del servicio.
+          </li>
+        </ol>
+
+      </div>
+    </section>
+
+    <main id="tableApp" class="app-shell" hidden>
       <section class="hero-card">
         <div class="brand-lockup" aria-label="Quinayas Aroma de Cacao">
           <img
@@ -93,6 +172,19 @@
         .forEach((element) => {
           element.src = assetBase + element.dataset.assetPath;
         });
+
+      const policiesGate = document.querySelector("#policiesGate");
+      const tableApp = document.querySelector("#tableApp");
+      const acceptPoliciesButton = document.querySelector(
+        "#acceptPoliciesButton"
+      );
+
+      acceptPoliciesButton.addEventListener("click", () => {
+        policiesGate.hidden = true;
+        tableApp.hidden = false;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
       import(assetBase + "main.js");
     </script>
   </body>

@@ -1,5 +1,8 @@
 const tabs = Array.from(document.querySelectorAll(".menu-tab"));
 const pages = Array.from(document.querySelectorAll(".menu-page"));
+const beverageGalleries = Array.from(
+  document.querySelectorAll(".beverage-group-gallery")
+);
 const promoPopup = document.querySelector(".promo-popup");
 const promoCloseControls = Array.from(
   document.querySelectorAll("[data-promo-close]")
@@ -19,6 +22,7 @@ initializeMenu();
 function initializeMenu() {
   const initialIndex = getIndexFromHash(window.location.hash);
   setActivePage(initialIndex, false);
+  initializeBeverageGalleries();
   initializePromoPopup();
 
   tabs.forEach((tab) => {
@@ -50,6 +54,27 @@ function initializeMenu() {
   window.addEventListener("hashchange", () => {
     const targetIndex = getIndexFromHash(window.location.hash);
     activatePage(targetIndex, false);
+  });
+}
+
+function initializeBeverageGalleries() {
+  beverageGalleries.forEach((gallery) => {
+    const cards = Array.from(
+      gallery.querySelectorAll(".beverage-group-gallery-card")
+    );
+
+    if (cards.length === 0) {
+      return;
+    }
+
+    gallery.style.setProperty("--gallery-count", String(cards.length));
+    gallery.classList.toggle(
+      "beverage-group-gallery--single",
+      cards.length === 1
+    );
+    cards.forEach((card, index) => {
+      card.style.setProperty("--card-index", String(index));
+    });
   });
 }
 

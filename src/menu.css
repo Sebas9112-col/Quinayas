@@ -425,6 +425,186 @@ body.menu-body {
   font-weight: 700;
 }
 
+.menu-page--beverages .page-intro {
+  max-width: 60ch;
+}
+
+.beverage-layout {
+  display: block;
+}
+
+.beverage-content {
+  display: grid;
+  gap: 20px;
+}
+
+.beverage-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  column-gap: 22px;
+  align-items: start;
+  padding: 20px 22px;
+  border-radius: 26px;
+  background: rgba(255, 252, 247, 0.84);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.beverage-group--highlight {
+  background:
+    linear-gradient(180deg, rgba(123, 147, 48, 0.08), transparent 56%),
+    rgba(255, 252, 247, 0.9);
+}
+
+.beverage-group-heading {
+  grid-column: 1;
+  margin-bottom: 10px;
+}
+
+.beverage-group-title {
+  margin: 0;
+  color: #72872c;
+  font-size: clamp(1.45rem, 2.6vw, 2.2rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.beverage-group-note {
+  margin: 8px 0 0;
+  max-width: 50ch;
+  color: #584735;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
+.beverage-list {
+  grid-column: 1;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.beverage-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding-left: 28px;
+}
+
+.beverage-item::before {
+  content: "•";
+  position: absolute;
+  top: 3px;
+  left: 2px;
+  color: #4c3a2c;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.beverage-item-title {
+  margin: 0;
+  color: #3f3024;
+  font-size: clamp(1.15rem, 2.2vw, 1.85rem);
+  line-height: 1.08;
+}
+
+.beverage-item-detail {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.beverage-item-price,
+.beverage-feature-price {
+  margin: 0;
+  color: #72872c;
+  white-space: nowrap;
+  min-width: 5.4ch;
+  padding-left: 10px;
+  justify-self: end;
+  text-align: right;
+  font-size: clamp(1.1rem, 2vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.beverage-feature {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.beverage-feature-description {
+  margin: 0;
+  color: #3f3024;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.beverage-gallery {
+  display: none;
+}
+
+.beverage-gallery-card {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.beverage-gallery-card img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 162px;
+  display: block;
+  padding: 8px;
+  background: rgba(255, 249, 240, 0.9);
+  border-radius: 24px;
+  border: 1px solid rgba(118, 93, 61, 0.16);
+  box-shadow: 0 10px 22px rgba(42, 28, 13, 0.12);
+}
+
+.beverage-group-gallery {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: start;
+  display: grid;
+  gap: 10px;
+  margin-top: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.beverage-group-gallery-card {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.beverage-group-gallery-card img {
+  width: 100%;
+  max-width: 100%;
+  height: 92px;
+  max-height: none;
+  display: block;
+  padding: 6px;
+  background: rgba(255, 249, 240, 0.92);
+  border-radius: 18px;
+  border: 1px solid rgba(118, 93, 61, 0.14);
+  box-shadow: 0 8px 18px rgba(42, 28, 13, 0.1);
+  object-fit: contain;
+}
+
 .menu-tabs {
   position: absolute;
   top: 0;
@@ -571,6 +751,75 @@ template {
     width: 100%;
     padding-top: 4px;
   }
+
+  .beverage-layout {
+    display: block;
+  }
+
+  .beverage-gallery {
+    display: none;
+  }
+
+  .beverage-group {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+
+  .beverage-group-gallery {
+    --banner-card-width: clamp(96px, 28vw, 122px);
+    --banner-card-height: 92px;
+    --banner-duration: calc(var(--gallery-count, 3) * 4.8s);
+    display: block;
+    position: relative;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+    min-height: calc(var(--banner-card-height) + 10px);
+    overflow: hidden;
+    padding: 4px 0 10px;
+    pointer-events: none;
+    contain: layout paint;
+  }
+
+  .beverage-group-gallery::-webkit-scrollbar {
+    display: none;
+  }
+
+  .beverage-group-gallery-card {
+    position: absolute;
+    top: 4px;
+    left: 0;
+    width: var(--banner-card-width);
+    justify-content: flex-start;
+    animation-name: beverage-banner-slide;
+    animation-duration: var(--banner-duration);
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-delay: calc(
+      (var(--banner-duration) / var(--gallery-count, 1)) * var(--card-index, 0) * -1
+    );
+  }
+
+  .beverage-group-gallery-card img {
+    width: 100%;
+    max-width: none;
+    height: var(--banner-card-height);
+    max-height: none;
+    object-fit: contain;
+  }
+
+  .beverage-group-gallery--single {
+    min-height: calc(var(--banner-card-height) + 2px);
+    padding-bottom: 0;
+  }
+
+  .beverage-group-gallery--single .beverage-group-gallery-card {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: min(150px, 52%);
+    animation: none;
+  }
 }
 
 @media (max-width: 640px) {
@@ -617,7 +866,7 @@ template {
   }
 
   .product-media {
-  overflow: hidden;
+    overflow: hidden;
   }
 
   .product-media img {
@@ -625,5 +874,55 @@ template {
     height: 100%;
     object-fit: cover;
     display: block;
+  }
+
+  .beverage-group {
+    padding: 18px 16px;
+    border-radius: 22px;
+  }
+
+  .beverage-item {
+    gap: 12px;
+    padding-left: 22px;
+  }
+
+  .beverage-item-title {
+    font-size: 1.15rem;
+  }
+
+  .beverage-item-detail {
+    font-size: 0.9rem;
+  }
+
+  .beverage-feature {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .beverage-group-gallery {
+    --banner-card-width: clamp(92px, 32vw, 110px);
+    --banner-card-height: 88px;
+  }
+
+  .beverage-group-gallery-card img {
+    height: var(--banner-card-height);
+  }
+
+  .beverage-gallery {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .beverage-gallery-card img {
+    height: 126px;
+  }
+}
+
+@keyframes beverage-banner-slide {
+  from {
+    transform: translateX(100vw);
+  }
+
+  to {
+    transform: translateX(calc(-100% - 20px));
   }
 }
