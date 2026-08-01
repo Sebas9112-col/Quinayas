@@ -11,7 +11,6 @@
   --spine-mid: #4d3a22;
   --gold: #c9a96e;
   --tab-width: 68px;
-  --spine-width: 28px;
   --radius: 8px;
 }
 
@@ -115,46 +114,14 @@ body.menu-body {
   transform-style: preserve-3d;
 }
 
-.menu-spine {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: var(--spine-width);
-  height: 100%;
-  z-index: 10;
-  border-radius: 6px 0 0 6px;
-  background: linear-gradient(
-    to right,
-    var(--spine-dark),
-    var(--spine-mid) 58%,
-    #281d10
-  );
-  box-shadow:
-    -5px 0 14px rgba(0, 0, 0, 0.45),
-    inset 2px 0 4px rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.menu-spine-text {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  color: var(--gold);
-  font-size: 11px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  opacity: 0.86;
-}
-
 .menu-pages-container {
   position: absolute;
   top: 0;
-  left: var(--spine-width);
+  left: 0;
   right: var(--tab-width);
   height: 100%;
   overflow: hidden;
-  border-radius: 0 4px 4px 0;
+  border-radius: 6px 4px 4px 6px;
   box-shadow:
     6px 0 24px var(--shadow),
     12px 6px 34px rgba(0, 0, 0, 0.18);
@@ -174,19 +141,6 @@ body.menu-body {
   visibility: hidden;
   pointer-events: none;
   backface-visibility: hidden;
-}
-
-.menu-page::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    transparent,
-    transparent 31px,
-    rgba(180, 160, 120, 0.12) 31px,
-    rgba(180, 160, 120, 0.12) 32px
-  );
-  pointer-events: none;
 }
 
 .menu-page::after {
@@ -485,6 +439,8 @@ body.menu-body {
   padding: 4px 0 0;
   display: grid;
   gap: 10px;
+  align-content: start;
+  align-self: start;
 }
 
 .beverage-item {
@@ -496,10 +452,33 @@ body.menu-body {
   padding-left: 28px;
 }
 
+.beverage-item--detail {
+  grid-template-areas:
+    "title price"
+    "detail detail";
+  row-gap: 4px;
+}
+
+.beverage-item--detail .beverage-item-copy {
+  display: contents;
+}
+
+.beverage-item--detail .beverage-item-title {
+  grid-area: title;
+}
+
+.beverage-item--detail .beverage-item-detail {
+  grid-area: detail;
+}
+
+.beverage-item--detail .beverage-item-price {
+  grid-area: price;
+}
+
 .beverage-item::before {
   content: "•";
   position: absolute;
-  top: 3px;
+  top: 0.12em;
   left: 2px;
   color: #4c3a2c;
   font-size: 1.35rem;
@@ -528,6 +507,9 @@ body.menu-body {
   white-space: nowrap;
   min-width: 5.4ch;
   padding-left: 10px;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
   justify-self: end;
   text-align: right;
   font-size: clamp(1.1rem, 2vw, 1.7rem);
@@ -703,7 +685,7 @@ body.menu-body {
 .menu-bottom-edge {
   position: absolute;
   bottom: -8px;
-  left: var(--spine-width);
+  left: 0;
   right: var(--tab-width);
   height: 8px;
   border-radius: 0 0 3px 3px;
@@ -825,7 +807,6 @@ template {
 @media (max-width: 640px) {
   :root {
     --tab-width: 56px;
-    --spine-width: 22px;
   }
 
   .menu-book {
